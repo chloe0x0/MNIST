@@ -38,11 +38,11 @@ if __name__ == "__main__":
     it = iter(training_loader)
     images, labels = next(it)
 
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(3, 3))
     fig.tight_layout(pad=15.0)
-    imgs = 60
+    imgs = 15
     for ix in range(1, imgs+1):
-        plt.subplot(6, 10, ix)
+        plt.subplot(3, 5, ix)
         plt.axis('off')
         plt.imshow(images[ix].numpy().squeeze(), cmap="binary")
         plt.title(labels[ix].data.item())
