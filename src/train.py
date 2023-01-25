@@ -5,8 +5,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import datasets # MNIST Dataset
-import matplotlib.pyplot as plt
-import numpy as np
 
 # A basic Neural Network for handwritten digit recognition 
 # used as an introduction to PyTorch
