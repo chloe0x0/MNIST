@@ -9,15 +9,18 @@ from torchvision import datasets # MNIST Dataset
 # A basic Neural Network for handwritten digit recognition 
 # used as an introduction to PyTorch
 
-# Hyperparameters
+# Epochs to train for
 EPOCHS = 10
+# Batch sizes
 TRAIN_BATCH_SIZE = 64
-TEST_BATCH_SIZE = 128
-lr = 0.001 # Learning Rate
+TEST_BATCH_SIZE  = 128
+# Optimization parameters 
+lr = 0.001      # Learning Rate
+momentum = 0.9  # Momentum (used in SGD)
 
 # Other constants
 DATASET_PATH = "./MNIST/" # Root directory of where to store the MNIST dataset
-LOG_INT = 5 # Interval to print log details during training
+LOG_INT = 5               # Interval to print log details during training
 
 # Load Train and Test Data
 # torchvision already provides a Dataset object for MNIST
@@ -85,6 +88,7 @@ class Net(nn.Module):
             nn.ReLU(),
             # Output layer has 10 classes
             nn.Linear(64, 10),
+            nn.ReLU(),
             # Softmax layer
             nn.LogSoftmax(dim=1)
         )
@@ -94,8 +98,6 @@ class Net(nn.Module):
         Basic forward pass through the network
         '''
 
-        # Flatten the incoming image so it can be fed through the network
-        x = x.flatten()
         # Feed the flattened image through the network
         y = self.linear_relu(x)
 
@@ -110,25 +112,29 @@ if device.type == "cpu":
     print("Warning: Training model on CPU, could not find CUDA drivers.")
 
 # Instantiate Model
-model = Net()
+model = Net().to(device)
 
 # Optimizer
-# Will just use Adam
-opt = optim.Adam(model.parameters(), lr=lr)
+# Will use Stochastic Gradient Descent
+opt = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
 
 def train(epoch: int):
     '''
     A single training iteration of the model
     '''
     model.train()
-    for idx, (feature, label) in enumerate(training_loader):
+    for idx, (features, labels) in enumerate(training_loader):
+        # set feature and label tensors to device
+        features, labels = features.to(device), labels.to(device)
+        # flatten features tensor
+        features = features.view(features.shape[0], -1)
         # Need to ensure that the optimizer isnt accumulating gradients from previous iterations
         # zeroing the gradient is how this is achieved in PyTorch
         opt.zero_grad()
         # Predict the value
-        y_hat = model(feature)
+        y_hat = model(features)
         # Compute the loss 
-        loss = F.nll_loss(y_hat, label)
+        loss = F.nll_loss(y_hat, labels)
         # Compute the gradient of the loss function
         loss.backward()
         # Optimization step, Gradient Descent
@@ -145,11 +151,13 @@ def test():
     correct = 0
     # Context manager allows us to avoid accumulating gradients and messing with the computation graph
     with torch.no_grad():
-        for feature, label in testing_loader:
-            y_hat = model(feature)
-            loss += F.nll_loss(y_hat, label, size_average=False).item()
+        for features, labels in testing_loader:
+            features, labels = features.to(device), labels.to(device)
+            features = features.view(features.shape[0], -1)
+            y_hat = model(features)
+            loss += F.nll_loss(y_hat, labels, size_average=False).item()
             prediction = y_hat.data.max(1, keepdim=True)[1]
-            correct += prediction.eq(label.data.view_as(prediction)).sum()
+            correct += prediction.eq(labels.data.view_as(prediction)).sum()
             
     # Average loss
     loss /= len(testing_loader.dataset)
