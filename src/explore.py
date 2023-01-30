@@ -45,6 +45,7 @@ if __name__ == "__main__":
         plt.subplot(3, 5, ix)
         plt.axis('off')
         plt.imshow(images[ix].numpy().squeeze(), cmap="binary")
+        print(images.view(images.shape[0], -1)[ix].shape, images.shape)
         plt.title(labels[ix].data.item())
 
     plt.show()

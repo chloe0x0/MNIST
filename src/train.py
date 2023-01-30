@@ -5,6 +5,9 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import datasets # MNIST Dataset
+import os
+from PIL import Image
+import matplotlib.pyplot as plt
 
 # A basic Neural Network for handwritten digit recognition 
 # used as an introduction to PyTorch
@@ -19,8 +22,11 @@ lr = 0.001      # Learning Rate
 momentum = 0.9  # Momentum (used in SGD)
 
 # Other constants
-DATASET_PATH = "./MNIST/" # Root directory of where to store the MNIST dataset
-LOG_INT = 5               # Interval to print log details during training
+DATASET_PATH = "./MNIST/"           # Root directory of where to store the MNIST dataset
+MODEL_PATH   = "./models/MNIST.pt"  # Path of where to store model checkpoints during training
+SERIALIZE    = False                # Whether or not to save the model to a .pt file after training
+LOG_INT      = 5                    # Interval to print log details during training
+TRAIN        = False                # Whether or not to train a new model or load a pre-existing one
 
 # Load Train and Test Data
 # torchvision already provides a Dataset object for MNIST
@@ -73,6 +79,9 @@ testing_loader = DataLoader(
 )
 
 # Build Model
+# Do not need to write a class for the network
+# could just as easily have written model = nn.Sequential(...)
+# may as well get used to writing classes for networks
 class Net(nn.Module):
     def __init__(self):
         # Initialize the Pytorch Module object
@@ -86,11 +95,13 @@ class Net(nn.Module):
             # First Hidden Layer
             nn.Linear(128, 64),
             nn.ReLU(),
-            # Output layer has 10 classes
-            nn.Linear(64, 10),
+            # Second Hidden Layer
+            nn.Linear(64, 64),
             nn.ReLU(),
+            # Output layer has 10 classe
+            nn.Linear(64, 10),
             # Softmax layer
-            nn.LogSoftmax(dim=1)
+            nn.LogSoftmax(dim=0)
         )
 
     def forward(self, x):
@@ -141,7 +152,7 @@ def train(epoch: int):
         opt.step()
         
         # Log
-        if (idx+1) % LOG_INT == 0:
+        if idx % LOG_INT == 0:
             print(f"Training Epoch: {epoch} \t Loss: {loss.item():.6f}%")
 
 # Test Function
@@ -167,7 +178,40 @@ def test():
     print(f"Testing Set: Avg Loss {loss} Accuracy {acc}")
 
 if __name__ == "__main__":
-    print("Training Network")
-    for epoch in range(0, EPOCHS):
-        train(epoch)
-        test()
+    if TRAIN:
+        print("Training Network")
+        for epoch in range(0, EPOCHS):
+            train(epoch)
+            test()
+    
+    # Serialize the model 
+    if SERIALIZE and TRAIN:
+        print(f"Saving trained model to {MODEL_PATH}")
+        torch.save(model.state_dict(), MODEL_PATH)
+    
+    if not TRAIN:
+        assert(os.path.exists(MODEL_PATH))
+        print(f"Loading model from {MODEL_PATH}")
+        model = Net().to(device)
+        model.load_state_dict(torch.load(MODEL_PATH))
+        model.eval()
+
+        '''
+        it = iter(testing_loader)
+        images, labels = next(it)
+        images = images.view(images.shape[0], -1)
+        y_hat = model(images)
+        prediction = y_hat.data.max(1, keepdim=True)[1]
+        print(prediction.reshape(labels.shape), '\n', labels)
+        '''
+
+        # Can now use for inference
+        # load 0.png and see if it works
+        zero = Image.open("./imgs/0.png")
+        # Convert PIL Image to Tensor and flatten
+        zero_tensor = norm(zero)
+        zero_tensor = zero_tensor.view(zero_tensor.shape[0], -1)
+        # Make a prediction
+        y_hat = model(zero_tensor)
+        class_ = y_hat.data.max(1, keepdim=True)[1].item()
+        print(f"Image is a {class_}")
