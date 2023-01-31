@@ -7,7 +7,6 @@ from torch.utils.data import DataLoader
 from torchvision import datasets # MNIST Dataset
 import os
 from PIL import Image
-import matplotlib.pyplot as plt
 
 # A basic Neural Network for handwritten digit recognition 
 # used as an introduction to PyTorch
