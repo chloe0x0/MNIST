@@ -12,20 +12,19 @@ from PIL import Image
 # used as an introduction to PyTorch
 
 # Epochs to train for
-EPOCHS = 10
+EPOCHS = 15
 # Batch sizes
 TRAIN_BATCH_SIZE = 64
 TEST_BATCH_SIZE  = 128
 # Optimization parameters 
-lr = 0.001      # Learning Rate
-momentum = 0.9  # Momentum (used in SGD)
+lr = 0.01      # Learning Rate
+momentum = 0.9  
 
 # Other constants
 DATASET_PATH = "./MNIST/"           # Root directory of where to store the MNIST dataset
 MODEL_PATH   = "./models/MNIST.pt"  # Path of where to store model checkpoints during training
 SERIALIZE    = False                # Whether or not to save the model to a .pt file after training
 LOG_INT      = 5                    # Interval to print log details during training
-TRAIN        = False                # Whether or not to train a new model or load a pre-existing one
 
 # Load Train and Test Data
 # torchvision already provides a Dataset object for MNIST
@@ -92,10 +91,10 @@ class Net(nn.Module):
             nn.Linear(28*28, 128),
             nn.ReLU(),
             # First Hidden Layer
-            nn.Linear(128, 64),
+            nn.Linear(128, 128),
             nn.ReLU(),
             # Second Hidden Layer
-            nn.Linear(64, 64),
+            nn.Linear(128, 64),
             nn.ReLU(),
             # Output layer has 10 classe
             nn.Linear(64, 10),
@@ -118,7 +117,7 @@ class Net(nn.Module):
 # Device to train on
 # Will use GPU/ CUDA if possible, otherwise will use CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-if device.type == "cpu":
+if device.type == "cpu" and TRAIN:
     print("Warning: Training model on CPU, could not find CUDA drivers.")
 
 # Instantiate Model
@@ -151,8 +150,8 @@ def train(epoch: int):
         opt.step()
         
         # Log
-        if idx % LOG_INT == 0:
-            print(f"Training Epoch: {epoch} \t Loss: {loss.item():.6f}%")
+        if idx % LOG_INT == 0 and epoch % LOG_INT == 0:
+            print(f"Training Epoch: {epoch} \t Batch: {idx} \t Loss: {loss.item():.6f}%")
 
 # Test Function
 def test():
@@ -177,40 +176,12 @@ def test():
     print(f"Testing Set: Avg Loss {loss} Accuracy {acc}")
 
 if __name__ == "__main__":
-    if TRAIN:
-        print("Training Network")
-        for epoch in range(0, EPOCHS):
-            train(epoch)
-            test()
-    
+    print("Training Network")
+    test()  # random network 
+    for epoch in range(0, EPOCHS):
+        train(epoch)
+        test()
     # Serialize the model 
-    if SERIALIZE and TRAIN:
+    if SERIALIZE:
         print(f"Saving trained model to {MODEL_PATH}")
         torch.save(model.state_dict(), MODEL_PATH)
-    
-    if not TRAIN:
-        assert(os.path.exists(MODEL_PATH))
-        print(f"Loading model from {MODEL_PATH}")
-        model = Net().to(device)
-        model.load_state_dict(torch.load(MODEL_PATH))
-        model.eval()
-
-        '''
-        it = iter(testing_loader)
-        images, labels = next(it)
-        images = images.view(images.shape[0], -1)
-        y_hat = model(images)
-        prediction = y_hat.data.max(1, keepdim=True)[1]
-        print(prediction.reshape(labels.shape), '\n', labels)
-        '''
-
-        # Can now use for inference
-        # load 0.png and see if it works
-        zero = Image.open("./imgs/0.png")
-        # Convert PIL Image to Tensor and flatten
-        zero_tensor = norm(zero)
-        zero_tensor = zero_tensor.view(zero_tensor.shape[0], -1)
-        # Make a prediction
-        y_hat = model(zero_tensor)
-        class_ = y_hat.data.max(1, keepdim=True)[1].item()
-        print(f"Image is a {class_}")
