@@ -96,7 +96,7 @@ class Net(nn.Module):
             # Second Hidden Layer
             nn.Linear(128, 64),
             nn.ReLU(),
-            # Output layer has 10 classe
+            # Output layer has 10 classes
             nn.Linear(64, 10),
             # Softmax layer
             nn.LogSoftmax(dim=0)
@@ -117,7 +117,7 @@ class Net(nn.Module):
 # Device to train on
 # Will use GPU/ CUDA if possible, otherwise will use CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-if device.type == "cpu" and TRAIN:
+if device.type == "cpu" and __name__ == "__main__":
     print("Warning: Training model on CPU, could not find CUDA drivers.")
 
 # Instantiate Model
