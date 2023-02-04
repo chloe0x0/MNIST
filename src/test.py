@@ -1,9 +1,7 @@
 import torch
-import torchvision
 import os
-from train import Net, MODEL_PATH, device, norm, testing_loader
+from train import Net, MODEL_PATH, device, testing_loader
 import matplotlib.pyplot as plt
-from PIL import Image
 
 # Using the trained model for inference
 
@@ -16,6 +14,7 @@ if __name__ == "__main__":
     # batch of testing data
     it = iter(testing_loader)
     imgs, labels = next(it)
+    imgs, labels = imgs.to(device), labels.to(device)
 
     # number of images to display
     TEST_LEN = 20
