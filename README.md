@@ -15,7 +15,7 @@ It achieved 98% accuracy after training for ~15 epochs.
 ## Project structure
 
 * /src/
-    * train.py : script to train models. models are saved to a /models/ directory
+    * train.py : script to train models. models are saved to a /models/ directory. The script will train on GPU/ CUDA if possible, otherwise it will train on CPU.
     * explore.py : used to visualize the dataset
     * test.py : test the model and visualize the results
 * /models/
